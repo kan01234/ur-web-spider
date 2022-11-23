@@ -14,7 +14,7 @@ except:
 
 
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
-OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT")
+OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%d")
 
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
