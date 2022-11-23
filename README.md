@@ -16,3 +16,15 @@ isDev: true
 
 python src/main.py
 ###
+
+## output
+
+### json file
+bukken-yyyyMMdd'T'HHmm.json
+
+example
+```
+[
+    {"madori": null, "allCount": "15", ....}
+]
+```
