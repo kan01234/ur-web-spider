@@ -3,8 +3,13 @@ import json
 from datetime import datetime
 import yaml
 
-configFile = yaml.safe_load(open("./config.yaml", "rb"))
-isDev=configFile.get("isDev")
+try:
+  configFile = yaml.safe_load(open("./config.yaml", "rb"))
+  isDev=configFile.get("isDev")
+except:
+  print("use default config")
+  isDev=False
+
 
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
 OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M") + ".csv"
