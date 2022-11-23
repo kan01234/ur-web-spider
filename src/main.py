@@ -57,24 +57,24 @@ bukkenSystemNameField = "制度名"
 bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Nearest station by Walk", "Nearest station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
 bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
 
-list_sep = ","
+LIST_SEP = ","
 
 # split traffic into by walk or by bus
 def parse_traffic(x):
-  stations = []
-  by_walk = []
-  by_bus = []
+  nearestStationList = []
+  byWalkList = []
+  byBusList = []
   for traffic in str(x).split(bukkenTrafficSep):
-    stations.append(re.search("(.*)(「.*」)(駅)", traffic)[0])
+    nearestStationList.append(re.search("(.*)(「.*」)(駅)", traffic)[0])
     if bukkenTrafficBus in traffic:
-      by_bus.append(traffic)
+      byBusList.append(traffic)
     else:
-      by_walk.append(traffic)
-  return [list_sep.join(stations), list_sep.join(by_walk), list_sep.join(by_bus)]
+      byWalkList.append(traffic)
+  return [LIST_SEP.join(nearestStationList), LIST_SEP.join(byWalkList), LIST_SEP.join(byBusList)]
 
 # flatten system json value
 def parse_system(x):
-  return list_sep.join(pd.json_normalize(x)[bukkenSystemNameField])
+  return LIST_SEP.join(pd.json_normalize(x)[bukkenSystemNameField])
 
 # open file write stream
 jsonRowCount = -1
