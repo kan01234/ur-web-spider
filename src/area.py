@@ -11,7 +11,7 @@ def areaMap():
     for shape in shapes:
         name = shape["alt"]
         code = shape["key-code"]
-        results[code] = name
+        results[name] = code
     return results
 
 # print(areaMap())
