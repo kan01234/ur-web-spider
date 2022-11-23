@@ -1,6 +1,15 @@
 import requests
 import json
 from datetime import datetime
+import yaml
+
+try:
+  configFile = yaml.safe_load(open("./config.yaml", "rb"))
+  isDev=configFile.get("isDev")
+except:
+  print("use default config")
+  isDev=False
+
 
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
 OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M") + ".csv"
@@ -37,9 +46,13 @@ with open(OUTPUT_FILE_NAME, "w") as file:
   hasNextPage = True
   page=0
   while hasNextPage:
-    response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers)
-    # print(response.content.decode("utf-8"))
-    bukkens = json.loads(response.content.decode("utf-8"))
+    if (isDev):
+      with open("./src/dev/bukkes-result-response.json", "r") as dummy:
+        response = str(dummy.read())
+    else:
+      response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers).content.decode("utf-8")
+
+    bukkens = json.loads(response)
     for bukken in bukkens:
       # TODO convert format
       # TODO write to csv or something
