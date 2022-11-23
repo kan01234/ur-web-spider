@@ -1,8 +1,9 @@
 import requests
 import json
+from datetime import datetime
 
-# details url
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
+OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M") + ".csv"
 
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
@@ -31,12 +32,19 @@ formBody = {
     "sp": None
 }
 
-hasNextPage = True
-page=0
-while hasNextPage:
-  response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers)
-  responseData = json.loads(response.content)
-  # TODO write to csv or something
-  hasNextPage = len(responseData) >= 0
-  # TODO update form body
-  formBody["pageIndex"] += 1
+# open file write stream
+with open(OUTPUT_FILE_NAME, "w") as file:
+  hasNextPage = True
+  page=0
+  while hasNextPage:
+    response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers)
+    # print(response.content.decode("utf-8"))
+    bukkens = json.loads(response.content.decode("utf-8"))
+    for bukken in bukkens:
+      # TODO convert format
+      # TODO write to csv or something
+      print(str(bukken))
+
+    # TODO hasNextPage = len(responseData) >= 0
+    hasNextPage = False
+    formBody["pageIndex"] += 1
