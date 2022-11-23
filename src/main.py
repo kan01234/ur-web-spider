@@ -2,6 +2,7 @@ import requests
 import json
 from datetime import datetime
 import yaml
+import pandas as pd
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -41,6 +42,10 @@ formBody = {
     "sp": None
 }
 
+# field mappings for bukken
+bukkenRecordPath = "room"
+bukkenMeta = ["danchiNm", "traffic", "place", "floorAll"]
+
 # open file write stream
 jsonRowCount = -1
 with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
@@ -62,9 +67,10 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
       else:
         jsonFile.write(",\n  " + json.dumps(bukken))
       
-      # TODO convert format
-      # TODO write to csv or something
-      print(str(bukken))
+      # to csv
+      data_frame = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
+      if not data_frame.empty:
+        csvFile.write(data_frame.to_csv(index=False))
 
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
