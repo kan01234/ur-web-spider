@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 import yaml
 import pandas as pd
+import re
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -13,7 +14,7 @@ except:
 
 
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
-OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M")
+OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%d")
 
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
@@ -48,35 +49,37 @@ bukkenMeta = ["tdfk", "shopHtmlName", "danchiNm", "traffic", "place", "floorAll"
 bukkenTrafficField = "traffic"
 bukkenTrafficBus = "バス"
 bukkenTrafficSep = "<br>"
+bukkenNearestStationField = "nearestStation"
 bukkenByWalkField = "byWalk"
 bukkenByBusField = "byBus"
 bukkenSystemField = "system"
 bukkenSystemNameField = "制度名"
-bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearst station by Walk", "Nearst station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
-bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
+bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Nearest station by Walk", "Nearest station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
+bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
 
-list_sep = ","
+LIST_SEP = ","
 
-# spli trffic into by walk or by bus
+# split traffic into by walk or by bus
 def parse_traffic(x):
-  by_walk = []
-  by_bus = []
+  nearestStationList = []
+  byWalkList = []
+  byBusList = []
   for traffic in str(x).split(bukkenTrafficSep):
+    nearestStationList.append(traffic[:traffic.index("駅") + 1])
     if bukkenTrafficBus in traffic:
-      by_bus.append(traffic)
+      byBusList.append(traffic)
     else:
-      by_walk.append(traffic)
-  return [list_sep.join(by_walk), list_sep.join(by_bus)]
+      byWalkList.append(traffic)
+  return [LIST_SEP.join(nearestStationList), LIST_SEP.join(byWalkList), LIST_SEP.join(byBusList)]
 
 # flatten system json value
 def parse_system(x):
-  return list_sep.join(pd.json_normalize(x)[bukkenSystemNameField])
+  return LIST_SEP.join(pd.json_normalize(x)[bukkenSystemNameField])
 
 # open file write stream
 jsonRowCount = -1
 with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
   hasNextPage = True
-  page=0
   jsonFile.write("[")
   while hasNextPage:
     if (isDev):
@@ -96,16 +99,16 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
       # to csv
       df = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
       if not df.empty:
-        df[[bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
+        df[[bukkenNearestStationField, bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
         df[bukkenSystemField] = df[bukkenSystemField].apply(lambda x: pd.Series(parse_system(x)))
         df.to_csv(
           path_or_buf=csvFile,
           index=False,
-          header=bukkenHeaders if page == 0 else False,
-          columns=bukkenColumns)
-
-      page += 1
-
+          header=bukkenHeaders,
+          columns=bukkenColumns,
+          encoding="utf-8"
+        )
+      bukkenHeaders = False
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
     formBody["pageIndex"] += 1
