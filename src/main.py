@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 import yaml
 import pandas as pd
+import re
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -48,25 +49,28 @@ bukkenMeta = ["tdfk", "shopHtmlName", "danchiNm", "traffic", "place", "floorAll"
 bukkenTrafficField = "traffic"
 bukkenTrafficBus = "バス"
 bukkenTrafficSep = "<br>"
+bukkenNearestStationField = "nearestStation"
 bukkenByWalkField = "byWalk"
 bukkenByBusField = "byBus"
 bukkenSystemField = "system"
 bukkenSystemNameField = "制度名"
-bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearst station by Walk", "Nearst station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
-bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
+bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Nearest station by Walk", "Nearest station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
+bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
 
 list_sep = ","
 
-# spli trffic into by walk or by bus
+# split traffic into by walk or by bus
 def parse_traffic(x):
+  stations = []
   by_walk = []
   by_bus = []
   for traffic in str(x).split(bukkenTrafficSep):
+    stations.append(re.search("(.*)(「.*」)(駅)", traffic)[0])
     if bukkenTrafficBus in traffic:
       by_bus.append(traffic)
     else:
       by_walk.append(traffic)
-  return [list_sep.join(by_walk), list_sep.join(by_bus)]
+  return [list_sep.join(stations), list_sep.join(by_walk), list_sep.join(by_bus)]
 
 # flatten system json value
 def parse_system(x):
@@ -95,7 +99,7 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
       # to csv
       df = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
       if not df.empty:
-        df[[bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
+        df[[bukkenNearestStationField, bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
         df[bukkenSystemField] = df[bukkenSystemField].apply(lambda x: pd.Series(parse_system(x)))
         df.to_csv(
           path_or_buf=csvFile,
