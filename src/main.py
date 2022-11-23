@@ -65,10 +65,9 @@ def parse_traffic(x):
   byWalkList = []
   byBusList = []
   for traffic in str(x).split(bukkenTrafficSep):
-    matches = re.search("(.*)(「.+」)(駅)( )?(徒歩|バス)(\d+)(～)?(\d+)?分", traffic)
-    nearestStationList.append(matches.group(1) + matches.group(2) + matches.group(3))
+    nearestStationList.append(traffic[:traffic.index("駅") + 1])
     if bukkenTrafficBus in traffic:
-      byBusList.append(re.search)
+      byBusList.append(traffic)
     else:
       byWalkList.append(traffic)
   return [LIST_SEP.join(nearestStationList), LIST_SEP.join(byWalkList), LIST_SEP.join(byBusList)]
