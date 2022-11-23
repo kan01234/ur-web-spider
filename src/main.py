@@ -13,7 +13,7 @@ except:
 
 
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
-OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M")
+OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT")
 
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
@@ -76,7 +76,6 @@ def parse_system(x):
 jsonRowCount = -1
 with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
   hasNextPage = True
-  page=0
   jsonFile.write("[")
   while hasNextPage:
     if (isDev):
@@ -101,11 +100,11 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
         df.to_csv(
           path_or_buf=csvFile,
           index=False,
-          header=bukkenHeaders if page == 0 else False,
-          columns=bukkenColumns)
-
-      page += 1
-
+          header=bukkenHeaders,
+          columns=bukkenColumns,
+          encoding="utf-8"
+        )
+      bukkenHeaders = False
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
     formBody["pageIndex"] += 1
