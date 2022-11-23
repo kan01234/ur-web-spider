@@ -44,7 +44,33 @@ formBody = {
 
 # field mappings for bukken
 bukkenRecordPath = "room"
-bukkenMeta = ["danchiNm", "traffic", "place", "floorAll"]
+bukkenMeta = ["tdfk", "shopHtmlName", "danchiNm", "traffic", "place", "floorAll"]
+bukkenTrafficField = "traffic"
+bukkenTrafficBus = "バス"
+bukkenTrafficSep = "<br>"
+bukkenByWalkField = "byWalk"
+bukkenByBusField = "byBus"
+bukkenSystemField = "system"
+bukkenSystemNameField = "制度名"
+bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearst station by Walk", "Nearst station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
+bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
+
+list_sep = ","
+
+# spli trffic into by walk or by bus
+def parse_traffic(x):
+  by_walk = []
+  by_bus = []
+  for traffic in str(x).split(bukkenTrafficSep):
+    if bukkenTrafficBus in traffic:
+      by_bus.append(traffic)
+    else:
+      by_walk.append(traffic)
+  return [list_sep.join(by_walk), list_sep.join(by_bus)]
+
+# flatten system json value
+def parse_system(x):
+  return list_sep.join(pd.json_normalize(x)[bukkenSystemNameField])
 
 # open file write stream
 jsonRowCount = -1
@@ -68,9 +94,17 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
         jsonFile.write(",\n  " + json.dumps(bukken))
       
       # to csv
-      data_frame = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
-      if not data_frame.empty:
-        csvFile.write(data_frame.to_csv(index=False))
+      df = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
+      if not df.empty:
+        df[[bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
+        df[bukkenSystemField] = df[bukkenSystemField].apply(lambda x: pd.Series(parse_system(x)))
+        df.to_csv(
+          path_or_buf=csvFile,
+          index=False,
+          header=bukkenHeaders if page == 0 else False,
+          columns=bukkenColumns)
+
+      page += 1
 
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
