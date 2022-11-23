@@ -12,7 +12,7 @@ except:
 
 
 BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
-OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M") + ".csv"
+OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%dT%H%M")
 
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
@@ -42,18 +42,26 @@ formBody = {
 }
 
 # open file write stream
-with open(OUTPUT_FILE_NAME, "w") as file:
+jsonRowCount = -1
+with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
   hasNextPage = True
   page=0
+  jsonFile.write("[")
   while hasNextPage:
     if (isDev):
       with open("./src/dev/bukkes-result-response.json", "r") as dummy:
         response = str(dummy.read())
     else:
       response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers).content.decode("utf-8")
-
     bukkens = json.loads(response)
     for bukken in bukkens:
+      jsonRowCount += 1
+      # write to json file
+      if (jsonRowCount == 0):
+        jsonFile.write("\n  " + json.dumps(bukken))
+      else:
+        jsonFile.write(",\n  " + json.dumps(bukken))
+      
       # TODO convert format
       # TODO write to csv or something
       print(str(bukken))
@@ -61,3 +69,4 @@ with open(OUTPUT_FILE_NAME, "w") as file:
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
     formBody["pageIndex"] += 1
+  jsonFile.write("\n]\n")
