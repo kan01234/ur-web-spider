@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 import yaml
 import re
-from data import Converter
+from data import Converter, headers, columns
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -43,93 +43,6 @@ formBody = {
     "pageIndexRoom": 0,
     "sp": None
 }
-
-# field mappings for bukken
-bukkenRecordPath = "room"
-bukkenMeta = ["tdfk", "shopHtmlName", "danchiNm", "traffic", "place", "floorAll"]
-bukkenTrafficField = "traffic"
-bukkenTrafficBus = "バス"
-bukkenTrafficSep = "<br>"
-bukkenNearestStationField = "nearestStation"
-bukkenByWalkField = "byWalk"
-bukkenByBusField = "byBus"
-bukkenSystemField = "system"
-bukkenSystemNameField = "制度名"
-bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Nearest station by Walk", "Nearest station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Room Link"]
-bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "roomLinkPc"]
-
-LIST_SEP = ","
-
-headers = [
-  "city",
-  "are",
-  "traffic",
-  "nearestStationByWalk",
-  "nearestStationByBus",
-  "address",
-  "building",
-  "room",
-  "roomType",
-  "floorSpace",
-  "floor",
-  "maxFloor",
-  "rent",
-  "commonFee",
-  "total",
-  "shikikin",
-  "systems",
-  "link",
-  "city",
-  "area",
-  "traffic",
-  "nearestStationByWalk",
-  "nearestStationByBus",
-  "address",
-]
-
-columns = [
-  "city",
-  "area",
-  "traffic",
-  "nearestStationByWalk",
-  "nearestStationByBus",
-  "address",
-  "building",
-  "room",
-  "roomType",
-  "floorSpace",
-  "floor",
-  "maxFloor",
-  "rent",
-  "commonFee",
-  "total",
-  "shikikin",
-  "systems",
-  "link",
-  "city",
-  "area",
-  "traffic",
-  "nearestStationByWalk",
-  "nearestStationByBus",
-  "address",
-]
-
-# split traffic into by walk or by bus
-def parse_traffic(x):
-  nearestStationList = []
-  byWalkList = []
-  byBusList = []
-  for traffic in str(x).split(bukkenTrafficSep):
-    nearestStationList.append(traffic[:traffic.index("駅") + 1])
-    if bukkenTrafficBus in traffic:
-      byBusList.append(traffic)
-    else:
-      byWalkList.append(traffic)
-  return [LIST_SEP.join(nearestStationList), LIST_SEP.join(byWalkList), LIST_SEP.join(byBusList)]
-
-# flatten system json value
-def parse_system(x):
-  return LIST_SEP.join(pd.json_normalize(x)[bukkenSystemNameField])
 
 # open file write stream
 jsonRowCount = -1
