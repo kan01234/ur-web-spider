@@ -74,6 +74,7 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
         header=headers,
         columns=columns,
         encoding="utf-8",
+        index=False,
       )
 
       headers = False

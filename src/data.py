@@ -155,7 +155,7 @@ class Converter:
         return bukken
 
     def toDf(self, bukken):
-        return pd.json_normalize(data=asdict(bukken), record_path="rooms", meta=[
+        df = pd.json_normalize(data=asdict(bukken), record_path="rooms", meta=[
             "city",
             "area",
             "traffic",
@@ -163,3 +163,8 @@ class Converter:
             "nearestStationByBus",
             "address",
         ])
+        if df.empty:
+            return df
+        # convert format
+        df["floor"] = df["floor"].apply(lambda x: pd.Series(int(x[:len(x) - 1])))
+        return df
