@@ -131,7 +131,8 @@ class Converter:
         return Room(
             building=json["roomNmMain"],
             room=json["roomNmSub"],
-            roomType=json["floorspace"],
+            roomType=json["type"],
+            floorSpace=json["floorspace"],
             floor=json["floor"],
             rent=json["rent"],
             commonFee=json["commonfee"],
@@ -166,5 +167,10 @@ class Converter:
         if df.empty:
             return df
         # convert format
+        toInt = lambda x : int("".join(c for c in x if c.isdigit()))
         df["floor"] = df["floor"].apply(lambda x: pd.Series(int(x[:len(x) - 1])))
+        df["rent"] = df["rent"].apply(lambda x: pd.Series(toInt(x)))
+        df["commonFee"] = df["commonFee"].apply(lambda x: pd.Series(toInt(x)))
+        df["total"] = df["rent"] + df["commonFee"]
+        df["floorSpace"] = df["floorSpace"].apply(lambda x: pd.Series(int(x.replace("&#13217;", ""))))
         return df
