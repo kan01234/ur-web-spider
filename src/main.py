@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import requests
 import json
 from datetime import datetime
@@ -59,6 +60,60 @@ bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Neares
 bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "roomLinkPc"]
 
 LIST_SEP = ","
+
+headers = [
+  "city",
+  "are",
+  "traffic",
+  "nearestStationByWalk",
+  "nearestStationByBus",
+  "address",
+  "building",
+  "room",
+  "roomType",
+  "floorSpace",
+  "floor",
+  "maxFloor",
+  "rent",
+  "commonFee",
+  "total",
+  "shikikin",
+  "systems",
+  "link",
+  "city",
+  "area",
+  "traffic",
+  "nearestStationByWalk",
+  "nearestStationByBus",
+  "address",
+]
+
+columns = [
+  "city",
+  "area",
+  "traffic",
+  "nearestStationByWalk",
+  "nearestStationByBus",
+  "address",
+  "building",
+  "room",
+  "roomType",
+  "floorSpace",
+  "floor",
+  "maxFloor",
+  "rent",
+  "commonFee",
+  "total",
+  "shikikin",
+  "systems",
+  "link",
+  "city",
+  "area",
+  "traffic",
+  "nearestStationByWalk",
+  "nearestStationByBus",
+  "address",
+]
 
 # split traffic into by walk or by bus
 def parse_traffic(x):
@@ -123,19 +178,25 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
         )
         bukken.rooms.append(room)
 
-      # convert data class bukkento csv
-      df = pd.json_normalize(bukkenJson, bukkenRecordPath, bukkenMeta)
-      if not df.empty:
-        df[[bukkenNearestStationField, bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
-        df[bukkenSystemField] = df[bukkenSystemField].apply(lambda x: pd.Series(parse_system(x)))
-        df.to_csv(
-          path_or_buf=csvFile,
-          index=False,
-          header=bukkenHeaders,
-          columns=bukkenColumns,
-          encoding="utf-8"
-        )
-      bukkenHeaders = False
+      # continue if no rooms available
+      if (len(bukken.rooms) <= 0):
+        continue
+      df = pd.json_normalize(asdict(bukken), "rooms", [
+        "city",
+        "area",
+        "traffic",
+        "nearestStationByWalk",
+        "nearestStationByBus",
+        "address",
+      ])
+      df.to_csv(
+        path_or_buf=csvFile,
+        header=headers,
+        columns=columns,
+        encoding="utf-8",
+      )
+
+      headers = False
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
     formBody["pageIndex"] += 1
