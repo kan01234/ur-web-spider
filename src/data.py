@@ -84,7 +84,7 @@ class Room:
     rent: int = 0
     commonFee: int = 0
     total: int = 0
-    # shikikin requried
+    # shikikin required
     shikikin: str = None
     # system
     systems: list = field(default_factory=list) 
