@@ -123,7 +123,7 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
         )
         bukken.rooms.append(room)
 
-      # convert data class bukken to csv
+      # convert data class bukkento csv
       df = pd.json_normalize(bukkenJson, bukkenRecordPath, bukkenMeta)
       if not df.empty:
         df[[bukkenNearestStationField, bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))

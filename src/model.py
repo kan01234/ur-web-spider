@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pandas_dataclasses import AsFrame, Data, Index
 
 @dataclass
 class Room:
@@ -21,19 +22,19 @@ class Room:
     link: str = None
 
 @dataclass
-class Bukken:
+class Bukken(AsFrame):
     # todofuken
-    city: str = ""
+    city: Index[str] = ""
     # area of city
-    area: str = ""
+    area: Index[str] = ""
     # dan chi name
-    danChi: str = ""
+    danChi: Data[str] = ""
     # traffic of raw response
-    traffic: str = ""
+    traffic: Data[str] = ""
     # nearest station by walk
-    nearestStationByWalk: str = ""
+    nearestStationByWalk: Data[str] = ""
     # nearest station by bus
-    nearestStationByBus: str = ""
+    nearestStationByBus: Data[str] = ""
     # address of building
-    address: str = ""
-    rooms: list[Room] = field(default_factory=list)
+    address: Data[str] = ""
+    rooms: Data[list[Room]] = field(default_factory=list)
