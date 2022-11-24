@@ -181,7 +181,8 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
       # continue if no rooms available
       if (len(bukken.rooms) <= 0):
         continue
-      df = pd.json_normalize(asdict(bukken), "rooms", [
+      
+      df = pd.json_normalize(data=asdict(bukken), record_path="rooms", meta=[
         "city",
         "area",
         "traffic",
