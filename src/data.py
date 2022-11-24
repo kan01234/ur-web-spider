@@ -116,6 +116,8 @@ class Room:
     systems: list = field(default_factory=list) 
     # link of room
     link: str = None
+    availableDate: str = ""
+
 
 @dataclass
 class Bukken:
@@ -152,9 +154,11 @@ class Converter:
         return self.decorateDetail(room, json)
 
     def decorateDetail(self, room, json):
-        response = self.requestBuilder.postRoomDetails(id=json["id"], shisya=json["shisya"], danchi=json["danchi"], shikibetu=json["shikibetu"])
-        print(json["id"], json["shisya"], json["danchi"], json["shikibetu"])
-        print(response==None)
+        toInt = lambda x : int("".join(c for c in x if c.isdigit()))
+        response = self.requestBuilder.postRoomDetails(id=json["id"], shisya=json["shisya"], danchi=json["danchi"], shikibetu=json["shikibetu"])[0]
+        room.maxFloor = toInt(response["floor_sp"][4:])
+        room.availableDate = response["availableDate"]
+        room.shikikin = response["shikikin"]
         return room
 
     # convert traffic to station details
