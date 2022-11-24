@@ -1,0 +1,30 @@
+{
+    "sonarlint": {
+        "rules": {
+            "python:S100": {
+                "level": "on",
+                "parameters": {
+                    "format": "^[a-z]+(?:[A-Z][a-z0-9]+)*$"
+                }
+            },
+            "python:S116": {
+                "level": "on",
+                "parameters": {
+                    "format": "^[a-z]+(?:[A-Z][a-z0-9]+)*$"
+                }
+            },
+            "python:S117": {
+                "level": "on",
+                "parameters": {
+                    "format": "^[a-z]+(?:[A-Z][a-z0-9]+)*$"
+                }
+            },
+            "python:S1542": {
+                "level": "on",
+                "parameters": {
+                    "format": "^[a-z]+(?:[A-Z][a-z0-9]+)*$"
+                }
+            },
+        }
+    }
+}

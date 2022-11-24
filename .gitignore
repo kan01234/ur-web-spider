@@ -3,3 +3,6 @@
 config.yaml
 .history
 *.pyc
+
+# vscode
+!.vscode/settings.json
