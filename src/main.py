@@ -1,9 +1,10 @@
+
 import requests
 import json
 from datetime import datetime
 import yaml
-import pandas as pd
 import re
+from data import Converter, headers, columns
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -43,43 +44,11 @@ formBody = {
     "sp": None
 }
 
-# field mappings for bukken
-bukkenRecordPath = "room"
-bukkenMeta = ["tdfk", "shopHtmlName", "danchiNm", "traffic", "place", "floorAll"]
-bukkenTrafficField = "traffic"
-bukkenTrafficBus = "バス"
-bukkenTrafficSep = "<br>"
-bukkenNearestStationField = "nearestStation"
-bukkenByWalkField = "byWalk"
-bukkenByBusField = "byBus"
-bukkenSystemField = "system"
-bukkenSystemNameField = "制度名"
-bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Nearest station by Walk", "Nearest station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Madori", "Room Link"]
-bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "madori", "roomLinkPc"]
-
-LIST_SEP = ","
-
-# split traffic into by walk or by bus
-def parse_traffic(x):
-  nearestStationList = []
-  byWalkList = []
-  byBusList = []
-  for traffic in str(x).split(bukkenTrafficSep):
-    nearestStationList.append(traffic[:traffic.index("駅") + 1])
-    if bukkenTrafficBus in traffic:
-      byBusList.append(traffic)
-    else:
-      byWalkList.append(traffic)
-  return [LIST_SEP.join(nearestStationList), LIST_SEP.join(byWalkList), LIST_SEP.join(byBusList)]
-
-# flatten system json value
-def parse_system(x):
-  return LIST_SEP.join(pd.json_normalize(x)[bukkenSystemNameField])
-
 # open file write stream
 jsonRowCount = -1
 with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
   hasNextPage = True
+  converter = Converter()
   jsonFile.write("[")
   while hasNextPage:
     if (isDev):
@@ -88,27 +57,26 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
     else:
       response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers).content.decode("utf-8")
     bukkens = json.loads(response)
-    for bukken in bukkens:
+    for bukkenJson in bukkens:
       jsonRowCount += 1
       # write to json file
       if (jsonRowCount == 0):
-        jsonFile.write("\n  " + json.dumps(bukken))
+        jsonFile.write("\n  " + json.dumps(bukkenJson))
       else:
-        jsonFile.write(",\n  " + json.dumps(bukken))
-      
-      # to csv
-      df = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
-      if not df.empty:
-        df[[bukkenNearestStationField, bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
-        df[bukkenSystemField] = df[bukkenSystemField].apply(lambda x: pd.Series(parse_system(x)))
-        df.to_csv(
-          path_or_buf=csvFile,
-          index=False,
-          header=bukkenHeaders,
-          columns=bukkenColumns,
-          encoding="utf-8"
-        )
-      bukkenHeaders = False
+        jsonFile.write(",\n  " + json.dumps(bukkenJson))
+
+      df = converter.toDf(converter.toBukken(bukkenJson))
+      # skip if df is empty
+      if df.empty:
+        continue
+      df.to_csv(
+        path_or_buf=csvFile,
+        header=headers,
+        columns=columns,
+        encoding="utf-8",
+      )
+
+      headers = False
     # TODO hasNextPage = len(responseData) >= 0
     hasNextPage = False
     formBody["pageIndex"] += 1
