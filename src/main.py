@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 import yaml
 import re
-from data import Converter, headers, columns
+from data import Converter, bukkenFields
 from builder import RequestBuilder
 
 try:
@@ -20,6 +20,7 @@ requestBuilder = RequestBuilder()
 # open file write stream
 jsonRowCount = -1
 with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
+  page = 0
   hasNextPage = True
   converter = Converter()
   jsonFile.write("[")
@@ -41,11 +42,12 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
         continue
       df.to_csv(
         path_or_buf=csvFile,
-        header=headers,
-        columns=columns,
+        header=bukkenFields.keys() if page == 0 else False,
+        columns=bukkenFields.values(),
         encoding="utf-8",
         index=False,
       )
+      page += 1
 
       headers = False
     # TODO hasNextPage = len(responseData) >= 0

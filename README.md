@@ -22,6 +22,12 @@ isDev: true
 python src/main.py
 ```
 
+## test
+
+```bash
+python3 -m pytest
+```
+
 ## output
 
 ### json file
