@@ -31,7 +31,7 @@ def parse_traffic(x):
 
 headers = [
   "city",
-  "are",
+  "area",
   "traffic",
   "nearestStationByWalk",
   "nearestStationByBus",
@@ -48,12 +48,6 @@ headers = [
   "shikikin",
   "systems",
   "link",
-  "city",
-  "area",
-  "traffic",
-  "nearestStationByWalk",
-  "nearestStationByBus",
-  "address",
 ]
 
 columns = [
@@ -75,12 +69,6 @@ columns = [
   "shikikin",
   "systems",
   "link",
-  "city",
-  "area",
-  "traffic",
-  "nearestStationByWalk",
-  "nearestStationByBus",
-  "address",
 ]
 
 @dataclass
