@@ -11,7 +11,6 @@ bukkenNearestStationField = "nearestStation"
 bukkenByWalkField = "byWalk"
 bukkenByBusField = "byBus"
 bukkenSystemField = "system"
-bukkenSystemNameField = "制度名"
 bukkenHeaders = ["Todofuken", "Area", "Dan Chi Name", "Nearest Station", "Nearest station by Walk", "Nearest station by Bus", "Address", "Building Name", "Room Num", "Room Type", "Floor Space", "Floor", "Max Floor", "Rent", "Shikikin", "Common Fee", "System", "Room Link"]
 bukkenColumns = ["tdfk", "shopHtmlName", "danchiNm", bukkenNearestStationField,bukkenByWalkField, bukkenByBusField, "place", "roomNmMain", "roomNmSub", "type", "floorspace", "floor", "floorAll", "rent", "shikikin", "commonfee", bukkenSystemField, "roomLinkPc"]
 
@@ -29,10 +28,6 @@ def parse_traffic(x):
     else:
       byWalkList.append(traffic)
   return [LIST_SEP.join(nearestStationList), LIST_SEP.join(byWalkList), LIST_SEP.join(byBusList)]
-
-# flatten system json value
-def parse_system(x):
-  return LIST_SEP.join(pd.json_normalize(x)[bukkenSystemNameField])
 
 headers = [
   "city",
@@ -173,4 +168,5 @@ class Converter:
         df["commonFee"] = df["commonFee"].apply(lambda x: pd.Series(toInt(x)))
         df["total"] = df["rent"] + df["commonFee"]
         df["floorSpace"] = df["floorSpace"].apply(lambda x: pd.Series(int(x.replace("&#13217;", ""))))
+        df["systems"] = df["systems"].apply(lambda systems: pd.Series(str(list(map(lambda x: x["制度名"], systems)))))
         return df
