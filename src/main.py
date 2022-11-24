@@ -16,18 +16,18 @@ except:
 
 OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%d")
 
-requestBuilder = RequestBuilder()
+requestBuilder = RequestBuilder(isDev)
 # open file write stream
 jsonRowCount = -1
 with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + ".csv", "w") as csvFile:
   page = 0
   hasNextPage = True
-  converter = Converter()
+  converter = Converter(isDev)
   jsonFile.write("[")
   page=-1
   while hasNextPage:
     page+=1
-    bukkens = requestBuilder.postBukkenResult(block="kanto", tdfk=13, skcs=201, page=page, isDev=isDev)
+    bukkens = requestBuilder.postBukkenResult(block="kanto", tdfk=13, skcs=201, page=page)
     for bukkenJson in bukkens:
       jsonRowCount += 1
       # write to json file
