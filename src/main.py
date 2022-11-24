@@ -4,6 +4,7 @@ from datetime import datetime
 import yaml
 import pandas as pd
 import re
+from model import Bukken, Room
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -88,16 +89,42 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
     else:
       response = requests.post(BUKKEN_RESULT_URL, data=formBody, headers=headers).content.decode("utf-8")
     bukkens = json.loads(response)
-    for bukken in bukkens:
+    for bukkenJson in bukkens:
       jsonRowCount += 1
       # write to json file
       if (jsonRowCount == 0):
-        jsonFile.write("\n  " + json.dumps(bukken))
+        jsonFile.write("\n  " + json.dumps(bukkenJson))
       else:
-        jsonFile.write(",\n  " + json.dumps(bukken))
+        jsonFile.write(",\n  " + json.dumps(bukkenJson))
       
-      # to csv
-      df = pd.json_normalize(bukken, bukkenRecordPath, bukkenMeta)
+      # init base information of Bukken
+      bukken = Bukken(
+        city=bukkenJson["tdfk"],
+        area=bukkenJson["shopHtmlName"],
+        danChi=bukkenJson["danchiNm"],
+        traffic=bukkenJson["traffic"],
+        address=bukkenJson["place"],
+      )
+
+      # TODO nearest station logic here
+
+
+      for roomJson in bukkenJson.get("room",[]):
+        room = Room(
+          building=roomJson["roomNmMain"],
+          room=roomJson["roomNmSub"],
+          roomType=roomJson["floorspace"],
+          floor=roomJson["floor"],
+          rent=roomJson["rent"],
+          commonFee=roomJson["commonfee"],
+          shikikin=roomJson["shikikin"],
+          systems=roomJson["system"],
+          link="https://www.ur-net.go.jp" + roomJson["roomLinkPc"],
+        )
+        bukken.rooms.append(room)
+
+      # convert data class bukken to csv
+      df = pd.json_normalize(bukkenJson, bukkenRecordPath, bukkenMeta)
       if not df.empty:
         df[[bukkenNearestStationField, bukkenByWalkField, bukkenByBusField]] = df[bukkenTrafficField].apply(lambda x: pd.Series(parse_traffic(str(x))))
         df[bukkenSystemField] = df[bukkenSystemField].apply(lambda x: pd.Series(parse_system(x)))
