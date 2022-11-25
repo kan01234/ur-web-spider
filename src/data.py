@@ -70,7 +70,8 @@ bukkenFields = {
     "Total Fee": ROOM_TOTAL_COLUMN_NAME,
     "Shikikin": ROOM_SHIKIKIN_COLUMN_NAME,
     "Systems": ROOM_SYSTEMS_COLUMN_NAME,
-    "Room Link": "link"
+    "Room Link": "link",
+    "availableDate": "availableDate"
 }
 
 @dataclass
@@ -154,17 +155,24 @@ class Converter:
         return self.decorateDetail(room, json)
 
     def decorateDetail(self, room, json):
-        toInt = lambda x : int("".join(c for c in x if c.isdigit()))
-        response = self.requestBuilder.postRoomDetails(id=json["id"], shisya=json["shisya"], danchi=json["danchi"], shikibetu=json["shikibetu"])[0]
-        room.maxFloor = toInt(response["floor_sp"][4:])
-        room.availableDate = response["availableDate"]
-        room.shikikin = response["shikikin"]
-        return room
+        try:
+            toInt = lambda x : int("".join(c for c in x if c.isdigit()))
+            response = self.requestBuilder.postRoomDetails(id=json["id"], shisya=json["shisya"], danchi=json["danchi"], shikibetu=json["shikibetu"])[0]
+            room.maxFloor = toInt(response["floor_sp"][4:])
+            room.availableDate = response["availableDate"]
+            room.shikikin = response["shikikin"]
+        finally:
+            return room
 
     # convert traffic to station details
     def toStation(self, traffic: str):
         station = Station()
         trafficMatch = re.search(BUKKEN_TRAFFIC_REGEX, traffic)
+        # TODO fix logic here
+        if (trafficMatch == None):
+            print("[error] unable to process traffic", traffic)
+            return station
+
         stationGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_STATION_GROUP)
 
         # bus
