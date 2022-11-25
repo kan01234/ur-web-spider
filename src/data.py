@@ -28,12 +28,14 @@ ROOM_SYSTEMS_COLUMN_NAME = "systems"
 
 # station column constant
 STATIONS_COLUMN_NAME = "stations"
-STATION_NEAREST_STATION_BY_WALK_COLUMN_NAME = "nearestStationByWalk"
-STATION_BEST_CASE_BY_WALK_COLUMN_NAME = "bestCaseByWalk"
-STATION_WORST_CASE_BY_WALK_COLUMN_NAME = "worstCaseByWalk"
-STATION_NEAREST_STATION_BY_BUS_COLUMN_NAME = "nearestStationByBus"
-STATION_BEST_CASE_BY_BUS_COLUMN_NAME = "bestCaseByBus"
-STATION_WORST_CASE_BY_BUS_COLUMN_NAME = "worstCaseByBus"
+STATION_BY_WALK_COLUMN_NAME = "byWalk"
+STATION_NEAREST_STATION_BY_WALK_COLUMN_NAME = f"{STATION_BY_WALK_COLUMN_NAME}.nearestStation"
+STATION_BEST_CASE_BY_WALK_COLUMN_NAME = f"{STATION_BY_WALK_COLUMN_NAME}.bestCaseMinute"
+STATION_WORST_CASE_BY_WALK_COLUMN_NAME = f"{STATION_BY_WALK_COLUMN_NAME}.worstCaseMinute"
+STATION_BY_BUS_COLUMN_NAME = "byBus"
+STATION_NEAREST_STATION_BY_BUS_COLUMN_NAME = f"{STATION_BY_BUS_COLUMN_NAME}.nearestStation"
+STATION_BEST_CASE_BY_BUS_COLUMN_NAME = f"{STATION_BY_BUS_COLUMN_NAME}.bestCaseMinute"
+STATION_WORST_CASE_BY_BUS_COLUMN_NAME = f"{STATION_BY_BUS_COLUMN_NAME}.worstCaseMinute"
 
 # bukken fields mappings
 BUKKEN_RECORD_PATH = "rooms"
@@ -54,11 +56,11 @@ BUKKEN_FIELDS = {
     "Dan Chi Name": BUKKEN_DAN_CHI_COLUMN_NAME,
     "Total Fee": ROOM_TOTAL_COLUMN_NAME,
     "Nearest station by Walk": STATION_NEAREST_STATION_BY_WALK_COLUMN_NAME,
-    "Best case by Walk": STATION_BEST_CASE_BY_WALK_COLUMN_NAME,
-    "Worst case by Walk": STATION_WORST_CASE_BY_WALK_COLUMN_NAME,
+    "Best case by Walk (minute)": STATION_BEST_CASE_BY_WALK_COLUMN_NAME,
+    "Worst case by Walk (minute)": STATION_WORST_CASE_BY_WALK_COLUMN_NAME,
     "Nearest station by Bus": STATION_NEAREST_STATION_BY_BUS_COLUMN_NAME,
-    "Best case by Bus": STATION_BEST_CASE_BY_BUS_COLUMN_NAME,
-    "Worst case by Bus": STATION_WORST_CASE_BY_BUS_COLUMN_NAME,
+    "Best case by Bus (minute)": STATION_BEST_CASE_BY_BUS_COLUMN_NAME,
+    "Worst case by Bus (minute)": STATION_WORST_CASE_BY_BUS_COLUMN_NAME,
     "Address": BUKKEN_ADDRESS_COLUMN_NAME,
     "Building Name": "buildingName",
     "Floor": ROOM_FLOOR_COLUMN_NAME,
@@ -77,19 +79,30 @@ BUKKEN_FIELDS = {
 
 
 @dataclass
+class StationDetail:
+    def __init__(self, nearestStation=None, bestCaseMinute=None, worstCaseMinute=None):
+        self.nearestStation = nearestStation
+        self.bestCaseMinute = bestCaseMinute
+        self.worstCaseMinute = worstCaseMinute
+
+    # nearest station
+    nearestStation: str
+    # best case Minute
+    bestCaseMinute: int
+    # worst case minute
+    worstCaseMinute: int
+
+
+@dataclass
 class Station:
-    # nearest station by walk
-    nearestStationByWalk: str = None
-    # best case by walk
-    bestCaseByWalk: int = None
-    # worst case by walk
-    worstCaseByWalk: int = None
-    # nearest station by bus
-    nearestStationByBus: str = None
-    # best case by bus
-    bestCaseByBus: int = None
-    # worst case by bus
-    worstCaseByBus: int = None
+    def __init__(self, byWalk=None, byBus=None):
+        self.byWalk = StationDetail() if byWalk is None else byWalk
+        self.byBus = StationDetail() if byBus is None else byBus
+
+    # by walk
+    byWalk: StationDetail
+    # by bus
+    byBus: StationDetail
 
 
 @dataclass
@@ -188,67 +201,57 @@ class Converter:
         # bus
         busGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_BUS_GROUP)
         if busGroup is not None:
-            station.nearestStationByBus = stationGroup
+            station.byBus.nearestStation = stationGroup
             busMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, busGroup)
             bestCaseByBus = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-            station.bestCaseByBus = int(bestCaseByBus)
+            station.byBus.bestCaseMinute = int(bestCaseByBus)
             worstCaseByBus = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-            station.worstCaseByBus = int(worstCaseByBus) if worstCaseByBus is not None else int(bestCaseByBus)
+            station.byBus.worstCaseMinute = int(worstCaseByBus) if worstCaseByBus is not None else int(bestCaseByBus)
             # bus + walk
             walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
             if walkGroup is not None:
                 walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
                 bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
                 # best case by bus = best case by bus + best case by walk
-                station.bestCaseByBus += int(bestCaseByWalk)
+                station.byBus.bestCaseMinute += int(bestCaseByWalk)
                 # worst case by bus = worst case by bus + best/worst case by walk
                 worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-                station.worstCaseByBus += int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
+                station.byBus.worstCaseMinute += int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
         else:
             # walk
             walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
             if walkGroup is not None:
-                station.nearestStationByWalk = stationGroup
+                station.byWalk.nearestStation = stationGroup
                 walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
                 bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-                station.bestCaseByWalk = int(bestCaseByWalk)
+                station.byWalk.bestCaseMinute = int(bestCaseByWalk)
                 worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-                station.worstCaseByWalk = int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
+                station.byWalk.worstCaseMinute = int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
 
         return station
+
+    # compare station detail and return the best & wrose minutes case
+    def toStationDetail(self, currentDetail: StationDetail, nextDetail: StationDetail):
+        if currentDetail.nearestStation is None:
+            return nextDetail
+        elif nextDetail.nearestStation is not None:
+            return StationDetail(nextDetail.nearestStation, min(currentDetail.bestCaseMinute, nextDetail.bestCaseMinute), max(currentDetail.worstCaseMinute, nextDetail.worstCaseMinute))
+        return currentDetail
 
     # convert traffic to station details
     def toStations(self, str: str):
         stations: dict[Station] = {}
         for traffic in str.split(BUKKEN_TRAFFIC_SEP):
             station: Station = self.toStation(traffic)
-            key = station.nearestStationByWalk if station.nearestStationByWalk is not None else station.nearestStationByBus
+            key = station.byWalk.nearestStation if station.byWalk.nearestStation is not None else station.byBus.nearestStation
             if key not in stations:
                 stations[key] = station
             else:
                 currentStation = stations[key]
-                if currentStation.nearestStationByWalk is None:
-                    currentStation.nearestStationByWalk = station.nearestStationByWalk
-                    currentStation.bestCaseByWalk = station.bestCaseByWalk
-                    currentStation.worstCaseByWalk = station.worstCaseByWalk
-                elif station.nearestStationByWalk is not None:
-                    currentStation.bestCaseByWalk = min(currentStation.bestCaseByWalk, station.bestCaseByWalk)
-                    currentStation.worstCaseByWalk = max(currentStation.worstCaseByWalk, station.worstCaseByWalk)
-
-                if currentStation.nearestStationByBus is None:
-                    currentStation.nearestStationByBus = station.nearestStationByBus
-                    currentStation.bestCaseByBus = station.bestCaseByBus
-                    currentStation.worstCaseByBus = station.worstCaseByBus
-                elif station.nearestStationByBus is not None:
-                    currentStation.bestCaseByBus = min(currentStation.bestCaseByBus, station.bestCaseByBus)
-                    currentStation.worstCaseByBus = max(currentStation.worstCaseByBus, station.worstCaseByBus)
-                stations[key] = currentStation
+                currentStation.byWalk = self.toStationDetail(currentStation.byWalk, station.byWalk)
+                currentStation.byBus = self.toStationDetail(currentStation.byBus, station.byBus)
 
         return list(stations.values())
-
-    # station to df fields
-    def toStationDf(self, station):
-        return [station.nearestStationByWalk, station.bestCaseByWalk, station.worstCaseByWalk, station.nearestStationByBus, station.bestCaseByBus, station.bestCaseByWalk]
 
     # convert to bukken
     def toBukken(self, json):

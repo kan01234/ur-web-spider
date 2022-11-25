@@ -1,4 +1,4 @@
-isDev: false
+isDev: true
 output:
   directory: "./output/"
 queries:
