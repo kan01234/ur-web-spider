@@ -168,6 +168,11 @@ class Converter:
     def toStation(self, traffic: str):
         station = Station()
         trafficMatch = re.search(BUKKEN_TRAFFIC_REGEX, traffic)
+        # TODO fix logic here
+        if (trafficMatch == None):
+            print("[error] unable to process traffic", traffic)
+            return station
+
         stationGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_STATION_GROUP)
 
         # bus
