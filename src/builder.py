@@ -5,7 +5,7 @@ class RequestBuilder:
     BUKKEN_RESULT_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/result/bukken_result/"
     ROOM_DETAIL_URL = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/detail/detail_room/"
 
-    def __init__ (self, isDev = False):
+    def __init__(self, isDev = False):
         self.isDev = isDev
 
     def postRoomDetails(self, id, shisya, danchi, shikibetu):

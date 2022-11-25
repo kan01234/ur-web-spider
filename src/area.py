@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 
-AREA_URL="https://www.ur-net.go.jp/chintai/"
+AREA_URL = "https://www.ur-net.go.jp/chintai/"
+
 
 def areaMap():
     page = requests.get(AREA_URL)
