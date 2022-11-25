@@ -10,8 +10,8 @@ BUKKEN_TRAFFIC_SEP = "<br>"
 BUKKEN_TRAFFIC_REGEX_STATION_GROUP = "station"
 BUKKEN_TRAFFIC_REGEX_BUS_GROUP = "bus"
 BUKKEN_TRAFFIC_REGEX_WALK_GROUP = "walk"
-# (?<station>[^バス|徒歩]+)[ ]?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?
-BUKKEN_TRAFFIC_REGEX = f"(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>[^バス|徒歩| ]+)[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?"
+# ^(?<station>[^バス|徒歩]+)[ ]?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?$
+BUKKEN_TRAFFIC_REGEX = f"^(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>[^バス|徒歩| ]+)[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?$"
 BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP = "from"
 BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP = "to"
 BUKKEN_TRAFFIC_MINUTE_REGEX = f"(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP}>[0-9]+)(～)?(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP}>([0-9]+))?"
@@ -62,7 +62,7 @@ BUKKEN_FIELDS = {
     "Address": BUKKEN_ADDRESS_COLUMN_NAME,
     "Building Name": "buildingName",
     "Floor": ROOM_FLOOR_COLUMN_NAME,
-    "Room Num": "room",
+    "Room Num": "roomNum",
     "Room Type": "roomType",
     "Floor Space": ROOM_FLOOR_SPACE_COLUMN_NAME,
     "Max Floor": "maxFloor",
@@ -74,6 +74,7 @@ BUKKEN_FIELDS = {
     "Room Link": "link",
     "Traffic": ROOM_TRAFFIC_COLUMN_NAME,
 }
+
 
 @dataclass
 class Station:
@@ -90,12 +91,13 @@ class Station:
     # worst case by bus
     worstCaseByBus: int = None
 
+
 @dataclass
 class Room:
     # building name
     buildingName: str = ""
     # room
-    room: str = ""
+    roomNum: str = ""
     # room type
     roomType: str = ""
     # floor space
@@ -115,7 +117,7 @@ class Room:
     # shikikin required
     shikikin: str = None
     # system
-    systems: list = field(default_factory=list) 
+    systems: list = field(default_factory=list)
     # link of room
     link: str = None
     availableDate: str = ""
@@ -136,30 +138,35 @@ class Bukken:
     # list of rooms
     rooms: list[Room] = field(default_factory=list)
 
+
 class Converter:
-    def __init__(self, isDev = False):
+    def __init__(self, isDev=False):
         self.requestBuilder = RequestBuilder(isDev)
 
+    # to int
+    def toInt(self, x):
+        return int("".join(c for c in x if c.isdigit()))
+
+    # convert to room
     def toRoom(self, json):
         room = Room(
-            buildingName = json["roomNmMain"],
-            room = json["roomNmSub"],
-            roomType = json["type"],
-            floorSpace = json["floorspace"],
-            floor = json["floor"],
-            rent = json["rent"],
-            commonFee = json["commonfee"],
-            shikikin = json["shikikin"],
-            systems = json["system"],
-            link = f"https://www.ur-net.go.jp{json['roomLinkPc']}",
+            buildingName=json["roomNmMain"],
+            roomNum=json["roomNmSub"],
+            roomType=json["type"],
+            floorSpace=json["floorspace"],
+            floor=json["floor"],
+            rent=json["rent"],
+            commonFee=json["commonfee"],
+            shikikin=json["shikikin"],
+            systems=json["system"],
+            link=f"https://www.ur-net.go.jp{json['roomLinkPc']}",
         )
         return self.decorateDetail(room, json)
 
     def decorateDetail(self, room, json):
         try:
-            toInt = lambda x : int("".join(c for c in x if c.isdigit()))
             response = self.requestBuilder.postRoomDetails(id=json["id"], shisya=json["shisya"], danchi=json["danchi"], shikibetu=json["shikibetu"])[0]
-            room.maxFloor = toInt(response["floor_sp"][4:])
+            room.maxFloor = self.toInt(response["floor_sp"][4:])
             room.availableDate = response["availableDate"]
             room.shikikin = response["shikikin"]
         finally:
@@ -170,7 +177,7 @@ class Converter:
         station = Station()
         trafficMatch = re.search(BUKKEN_TRAFFIC_REGEX, traffic)
 
-        if (trafficMatch == None):
+        if (trafficMatch is None):
             print("[error] unable to process traffic", traffic)
             return station
 
@@ -245,18 +252,18 @@ class Converter:
     def toBukken(self, json):
         # init base information of Bukken
         bukken = Bukken(
-            city = json["tdfk"],
-            area = json["shopHtmlName"],
-            danChiName = json["danchiNm"],
-            traffic = json["traffic"],
-            address = json["place"],
+            city=json["tdfk"],
+            area=json["shopHtmlName"],
+            danChiName=json["danchiNm"],
+            traffic=json["traffic"],
+            address=json["place"],
         )
 
         # convert traffic
         stations = self.toStations(json[ROOM_TRAFFIC_COLUMN_NAME])
 
         # convert room
-        for roomJson in json.get("room",[]):
+        for roomJson in json.get("room", []):
             room: Room = self.toRoom(roomJson)
             room.stations = stations
             bukken.rooms.append(room)
@@ -268,17 +275,15 @@ class Converter:
 
         if df.empty:
             return df
-        # convert format
-        toInt = lambda x : int("".join(c for c in x if c.isdigit()))
 
         # floor to int, e.g. 5階 -> 5
         df[ROOM_FLOOR_COLUMN_NAME] = df[ROOM_FLOOR_COLUMN_NAME].apply(lambda x: pd.Series(int(x[:len(x) - 1])))
 
         # rent to int
-        df[ROOM_RENT_COLUMN_NAME] = df[ROOM_RENT_COLUMN_NAME].apply(lambda x: pd.Series(toInt(x)))
+        df[ROOM_RENT_COLUMN_NAME] = df[ROOM_RENT_COLUMN_NAME].apply(lambda x: pd.Series(self.toInt(x)))
 
         # common fee to int
-        df[ROOM_COMMON_FEE_COLUMN_NAME] = df[ROOM_COMMON_FEE_COLUMN_NAME].apply(lambda x: pd.Series(toInt(x)))
+        df[ROOM_COMMON_FEE_COLUMN_NAME] = df[ROOM_COMMON_FEE_COLUMN_NAME].apply(lambda x: pd.Series(self.toInt(x)))
 
         # total = rent + common fee
         df[ROOM_TOTAL_COLUMN_NAME] = df[ROOM_RENT_COLUMN_NAME] + df[ROOM_COMMON_FEE_COLUMN_NAME]
