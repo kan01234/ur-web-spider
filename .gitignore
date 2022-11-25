@@ -6,3 +6,5 @@ config.yaml
 
 # vscode
 !.vscode/settings.json
+!src/dev/*.csv
+!src/dev/*.json
