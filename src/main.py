@@ -1,11 +1,9 @@
 
 import traceback
-import requests
 import json
 from datetime import datetime
 import yaml
-import re
-from data import Converter, bukkenFields
+from data import Converter, BUKKEN_FIELDS
 from builder import RequestBuilder
 import os
 
@@ -57,11 +55,11 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
               if df.empty:
                 continue
               df.to_csv(
-                path_or_buf=csvFile,
-                header=bukkenFields.keys() if showHeader else False,
-                columns=bukkenFields.values(),
-                encoding="utf-8",
-                index=False,
+                path_or_buf = csvFile,
+                header = BUKKEN_FIELDS.keys() if showHeader else False,
+                columns = BUKKEN_FIELDS.values(),
+                encoding = "utf-8",
+                index = False,
               )
               showHeader = False
             hasNextPage = len(bukkens) >= 0 or not isDev

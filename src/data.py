@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, asdict
-import pandas as pd
 from builder import RequestBuilder
+import pandas as pd
 import re
 
 LIST_SEP = ","
@@ -10,7 +10,8 @@ BUKKEN_TRAFFIC_SEP = "<br>"
 BUKKEN_TRAFFIC_REGEX_STATION_GROUP = "station"
 BUKKEN_TRAFFIC_REGEX_BUS_GROUP = "bus"
 BUKKEN_TRAFFIC_REGEX_WALK_GROUP = "walk"
-BUKKEN_TRAFFIC_REGEX = f"(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>.*駅)[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?"
+# (?<station>[^バス|徒歩]+)[ ]?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?
+BUKKEN_TRAFFIC_REGEX = f"(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>[^バス|徒歩| ]+)[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?"
 BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP = "from"
 BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP = "to"
 BUKKEN_TRAFFIC_MINUTE_REGEX = f"(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP}>[0-9]+)(～)?(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP}>([0-9]+))?"
@@ -47,7 +48,7 @@ BUKKEN_META = [
     ROOM_TRAFFIC_COLUMN_NAME,
     BUKKEN_ADDRESS_COLUMN_NAME,
 ]
-bukkenFields = {
+BUKKEN_FIELDS = {
     "Todofuken": BUKKEN_CITY_COLUMN_NAME,
     "Area": BUKKEN_AREA_COLUMN_NAME,
     "Dan Chi Name": BUKKEN_DAN_CHI_COLUMN_NAME,
@@ -168,7 +169,7 @@ class Converter:
     def toStation(self, traffic: str):
         station = Station()
         trafficMatch = re.search(BUKKEN_TRAFFIC_REGEX, traffic)
-        # TODO fix logic here
+
         if (trafficMatch == None):
             print("[error] unable to process traffic", traffic)
             return station
@@ -181,21 +182,29 @@ class Converter:
             station.nearestStationByBus = stationGroup
             busMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, busGroup)
             bestCaseByBus = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-            station.bestCaseByBus = bestCaseByBus
+            station.bestCaseByBus = int(bestCaseByBus)
             worstCaseByBus = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-            if worstCaseByBus is not None:
-                station.worstCaseByBus = worstCaseByBus
-
-        # walk
-        walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
-        if walkGroup is not None:
-            station.nearestStationByWalk = stationGroup
-            walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
-            bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-            station.bestCaseByWalk = bestCaseByWalk
-            worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-            if worstCaseByWalk is not None:
-                station.worstCaseByWalk = worstCaseByWalk
+            station.worstCaseByBus = int(worstCaseByBus) if worstCaseByBus is not None else int(bestCaseByBus)
+            # bus + walk
+            walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
+            if walkGroup is not None:
+                walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
+                bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
+                # best case by bus = best case by bus + best case by walk
+                station.bestCaseByBus += int(bestCaseByWalk)
+                # worst case by bus = worst case by bus + best/worst case by walk
+                worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
+                station.worstCaseByBus += int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
+        else:
+            # walk
+            walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
+            if walkGroup is not None:
+                station.nearestStationByWalk = stationGroup
+                walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
+                bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
+                station.bestCaseByWalk = int(bestCaseByWalk)
+                worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
+                station.worstCaseByWalk = int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
 
         return station
 

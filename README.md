@@ -3,14 +3,14 @@
 ## install dependency
 
 ```bash
-python -m pip install -r requirements.txt
-python -m pip install --upgrade -r requirements.txt
+python3 -m pip install -r requirements.txt
+python3 -m pip install --upgrade -r requirements.txt
 ```
 
 ## execute
 
 ```bash
-python src/main.py
+python3 src/main.py
 ```
 
 ## execute with dev mode (no request to real server)

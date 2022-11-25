@@ -4,7 +4,7 @@
             "python:S100": {
                 "level": "on",
                 "parameters": {
-                    "format": "^[a-z]+(?:[A-Z][a-z0-9]+)*$"
+                    "format": "^[a-z_]+(?:[A-Z][a-z0-9_]+)*$"
                 }
             },
             "python:S116": {
