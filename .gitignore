@@ -1,5 +1,5 @@
-*.csv
-*.json
+# *.csv
+# *.json
 config.yaml
 .history
 *.pyc
