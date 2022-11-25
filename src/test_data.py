@@ -4,7 +4,6 @@ from src.data import Converter, Station, StationDetail
 
 # for debug
 # JR中央線「高尾」駅徒歩25～30分
-# JR中央線「高尾」駅
 # JR中央線「高尾」駅バス7分 徒歩1～11分
 # JR中央線ほか｢八王子｣駅 徒歩13分
 # 多摩都市モノレール「松が谷」駅 徒歩5～8分
@@ -29,6 +28,8 @@ from src.data import Converter, Station, StationDetail
     ("京成本線「八千代台」駅バス7～8分 徒歩1～11分", Station(StationDetail(), StationDetail("京成本線「八千代台」駅", 8, 19))),
     ("JR根岸線・横浜市営地下鉄ブルーライン「桜木町」バス26分徒歩1分", Station(StationDetail(), StationDetail("JR根岸線・横浜市営地下鉄ブルーライン「桜木町」", 27, 27))),
     ("JR根岸線・横浜市営地下鉄ブルーライン「桜木町」徒歩1分", Station(StationDetail("JR根岸線・横浜市営地下鉄ブルーライン「桜木町」", 1, 1), StationDetail())),
+    ("京王相模原線「南大沢」駅（3－1～3号棟）徒歩8分 またはバス3分 徒歩4分、（16－1～5号棟）徒歩15～17分 またはバス8分 徒歩3～4分", Station(StationDetail("京王相模原線「南大沢」駅", 8, 17), StationDetail("京王相模原線「南大沢」駅", 7, 12))),
+    ("京王線「聖蹟桜ヶ丘」駅（3－1～3号棟）バス37分 徒歩3～4分、（16－1～5号棟）バス37分 徒歩12～13分", Station(StationDetail(), StationDetail("京王線「聖蹟桜ヶ丘」駅", 40, 50)))
 ])
 def testToStation(input, expectedStation):
     converter = Converter(True)
