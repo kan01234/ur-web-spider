@@ -6,16 +6,22 @@ import yaml
 import re
 from data import Converter, bukkenFields
 from builder import RequestBuilder
+import os
 
 try:
   configFile = yaml.safe_load(open("./config.yaml", "rb"))
   isDev=configFile.get("isDev")
   queries = configFile.get("queries")
+  outputDirectory = configFile.get("output")["directory"]
 except:
   print("use default config")
   isDev=False
 
-OUTPUT_FILE_NAME = "bukken-" + datetime.now().strftime("%Y%m%d")
+# mkdir if not exist
+if (not os.path.exists(outputDirectory)):
+  os.mkdir(outputDirectory)
+
+OUTPUT_FILE_NAME = outputDirectory + "bukken-" + datetime.now().strftime("%Y%m%d")
 
 requestBuilder = RequestBuilder(isDev)
 # open file write stream

@@ -1,10 +1,13 @@
-# *.csv
-# *.json
+*.csv
+*.json
+
 config.yaml
 .history
 *.pyc
 
 # vscode
 !.vscode/settings.json
+
+# allow data file for dev
 !src/dev/*.csv
 !src/dev/*.json

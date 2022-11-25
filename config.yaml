@@ -1,4 +1,6 @@
 isDev: false
+output:
+  directory: "./output/"
 queries:
   kanto:
     # tokyo
