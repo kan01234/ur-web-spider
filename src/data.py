@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, asdict
 import pandas as pd
+from builder import RequestBuilder
 import re
 
 LIST_SEP = ","
@@ -115,6 +116,8 @@ class Room:
     systems: list = field(default_factory=list) 
     # link of room
     link: str = None
+    availableDate: str = ""
+
 
 @dataclass
 class Bukken:
@@ -132,9 +135,11 @@ class Bukken:
     rooms: list[Room] = field(default_factory=list)
 
 class Converter:
-    # convert to room
+    def __init__(self, isDev = False):
+        self.requestBuilder = RequestBuilder(isDev)
+
     def toRoom(self, json):
-        return Room(
+        room = Room(
             buildingName = json["roomNmMain"],
             room = json["roomNmSub"],
             roomType = json["type"],
@@ -146,6 +151,15 @@ class Converter:
             systems = json["system"],
             link = f"https://www.ur-net.go.jp{json['roomLinkPc']}",
         )
+        return self.decorateDetail(room, json)
+
+    def decorateDetail(self, room, json):
+        toInt = lambda x : int("".join(c for c in x if c.isdigit()))
+        response = self.requestBuilder.postRoomDetails(id=json["id"], shisya=json["shisya"], danchi=json["danchi"], shikibetu=json["shikibetu"])[0]
+        room.maxFloor = toInt(response["floor_sp"][4:])
+        room.availableDate = response["availableDate"]
+        room.shikikin = response["shikikin"]
+        return room
 
     # convert traffic to station details
     def toStation(self, traffic: str):
