@@ -12,8 +12,12 @@ BUKKEN_STATION_BUILDING_NUM_PATTERN = r'(（.*）)'
 BUKKEN_TRAFFIC_REGEX_STATION_GROUP = "station"
 BUKKEN_TRAFFIC_REGEX_BUS_GROUP = "bus"
 BUKKEN_TRAFFIC_REGEX_WALK_GROUP = "walk"
-# ^(?<station>[^バス|徒歩]+)?[ ]?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?[ ]?$
-BUKKEN_TRAFFIC_REGEX = f"^(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>[^バス|徒歩| ]+)?[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?[ ]?$"
+# ^(?<station>((?!バス|徒歩| ).)+)?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?[ ]?$
+BUKKEN_TRAFFIC_SPACE_REGEX = "[ ]?"
+BUKKEN_TRAFFIC_STATION_REGEX = f"(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>((?!バス|徒歩| ).)+)?"
+BUKKEN_TRAFFIC_BUS_REGEX = f"(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?"
+BUKKEN_TRAFFIC_WALK_REGEX = f"(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?"
+BUKKEN_TRAFFIC_REGEX = f"^{BUKKEN_TRAFFIC_STATION_REGEX}{BUKKEN_TRAFFIC_BUS_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}{BUKKEN_TRAFFIC_WALK_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}$"
 BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP = "from"
 BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP = "to"
 BUKKEN_TRAFFIC_MINUTE_REGEX = f"(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP}>[0-9]+)(～)?(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP}>([0-9]+))?"
@@ -45,12 +49,14 @@ BUKKEN_CITY_COLUMN_NAME = "city"
 BUKKEN_AREA_COLUMN_NAME = "area"
 BUKKEN_DAN_CHI_COLUMN_NAME = "danChiName"
 BUKKEN_ADDRESS_COLUMN_NAME = "address"
+BUKKEN_STRUCTURE_COLUMN_NAME = "structure"
 BUKKEN_META = [
     BUKKEN_CITY_COLUMN_NAME,
     BUKKEN_AREA_COLUMN_NAME,
     BUKKEN_DAN_CHI_COLUMN_NAME,
     ROOM_TRAFFIC_COLUMN_NAME,
     BUKKEN_ADDRESS_COLUMN_NAME,
+    BUKKEN_STRUCTURE_COLUMN_NAME
 ]
 BUKKEN_FIELDS = {
     "Todofuken": BUKKEN_CITY_COLUMN_NAME,
@@ -65,6 +71,7 @@ BUKKEN_FIELDS = {
     "Worst case by Bus (minute)": STATION_WORST_CASE_BY_BUS_COLUMN_NAME,
     "Address": BUKKEN_ADDRESS_COLUMN_NAME,
     "Building Name": "buildingName",
+    "Building Structure": BUKKEN_STRUCTURE_COLUMN_NAME,
     "Floor": ROOM_FLOOR_COLUMN_NAME,
     "Room Num": "roomNum",
     "Room Type": "roomType",
@@ -159,6 +166,8 @@ class Room:
 class Bukken:
     # todofuken
     city: str = ""
+    # building structure
+    structure: str = ""
     # area of city
     area: str = ""
     # dan chi name
@@ -202,7 +211,7 @@ class Converter:
             room.availableDate = response["availableDate"]
             room.shikikin = response["shikikin"]
         except Exception as e:
-            print(f"[error] unable to decorate detail, {e}")
+            print("[error] unable to decorate detail", e)
 
         return room
 
@@ -292,6 +301,7 @@ class Converter:
             danChiName=json["danchiNm"],
             traffic=json["traffic"],
             address=json["place"],
+            structure=json["kouzou"],
         )
 
         # convert traffic
