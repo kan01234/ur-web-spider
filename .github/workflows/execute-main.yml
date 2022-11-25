@@ -28,6 +28,7 @@ jobs:
       run: |
         python src/main.py
     - name: Commit and push changes
+      if: always()
       uses: devops-infra/action-commit-push@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
