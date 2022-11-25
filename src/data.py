@@ -169,8 +169,10 @@ class Converter:
             room.maxFloor = self.toInt(response["floor_sp"][4:])
             room.availableDate = response["availableDate"]
             room.shikikin = response["shikikin"]
-        finally:
-            return room
+        except Exception as e:
+            print(f"[error] unable to decorate detail, {e}")
+
+        return room
 
     # convert traffic to station details
     def toStation(self, traffic: str):

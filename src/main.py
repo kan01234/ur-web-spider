@@ -12,8 +12,9 @@ try:
     isDev = configFile.get("isDev")
     queries = configFile.get("queries")
     outputDirectory = configFile.get("output")["directory"]
-except:
-    print("use default config")
+except Exception as e:
+    print(f"use default config: {e}")
+    traceback.print_exc()
     isDev = False
 
 # mkdir if not exist
