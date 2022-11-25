@@ -7,11 +7,13 @@ LIST_SEP = ","
 
 # traffic column constant
 BUKKEN_TRAFFIC_SEP = "<br>"
+BUKKEN_STATION_SEP_PATTERN = r'、|または'
+BUKKEN_STATION_BUILDING_NUM_PATTERN = r'(（.*）)'
 BUKKEN_TRAFFIC_REGEX_STATION_GROUP = "station"
 BUKKEN_TRAFFIC_REGEX_BUS_GROUP = "bus"
 BUKKEN_TRAFFIC_REGEX_WALK_GROUP = "walk"
-# ^(?<station>[^バス|徒歩]+)[ ]?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?$
-BUKKEN_TRAFFIC_REGEX = f"^(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>[^バス|徒歩| ]+)[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?$"
+# ^(?<station>[^バス|徒歩]+)?[ ]?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?[ ]?$
+BUKKEN_TRAFFIC_REGEX = f"^(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>[^バス|徒歩| ]+)?[ ]?(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?[ ]?(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?[ ]?$"
 BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP = "from"
 BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP = "to"
 BUKKEN_TRAFFIC_MINUTE_REGEX = f"(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP}>[0-9]+)(～)?(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP}>([0-9]+))?"
@@ -187,51 +189,62 @@ class Converter:
 
         return room
 
-    # convert traffic to station details
-    def toStation(self, traffic: str):
-        station = Station()
-        trafficMatch = re.search(BUKKEN_TRAFFIC_REGEX, traffic)
+    # common to station detail function for to station method
+    def toStationDetailForStation(self, trafficMatch, group: str, nearestStation: str, bestCaseMinute: int, worstCaseMinute: int, stationDetail: StationDetail):
+        groupMatch = trafficMatch.group(group)
+        if groupMatch is None:
+            return stationDetail
 
-        if (trafficMatch is None):
-            print("[error] unable to process traffic", traffic)
-            return station
+        minuteMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, groupMatch)
+        bestCaseMatch = minuteMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
+        worstCaseMatch = minuteMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
+        bestCaseMinute += int(bestCaseMatch)
+        worstCaseMinute += int(worstCaseMatch) if worstCaseMatch is not None else int(bestCaseMatch)
 
-        stationGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_STATION_GROUP)
-
-        # bus
-        busGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_BUS_GROUP)
-        if busGroup is not None:
-            station.byBus.nearestStation = stationGroup
-            busMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, busGroup)
-            bestCaseByBus = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-            station.byBus.bestCaseMinute = int(bestCaseByBus)
-            worstCaseByBus = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-            station.byBus.worstCaseMinute = int(worstCaseByBus) if worstCaseByBus is not None else int(bestCaseByBus)
-            # bus + walk
-            walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
-            if walkGroup is not None:
-                walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
-                bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-                # best case by bus = best case by bus + best case by walk
-                station.byBus.bestCaseMinute += int(bestCaseByWalk)
-                # worst case by bus = worst case by bus + best/worst case by walk
-                worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-                station.byBus.worstCaseMinute += int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
+        # assign to station
+        if stationDetail.nearestStation is None:
+            return StationDetail(nearestStation, bestCaseMinute, worstCaseMinute)
         else:
-            # walk
-            walkGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_WALK_GROUP)
-            if walkGroup is not None:
-                station.byWalk.nearestStation = stationGroup
-                walkMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, walkGroup)
-                bestCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
-                station.byWalk.bestCaseMinute = int(bestCaseByWalk)
-                worstCaseByWalk = walkMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
-                station.byWalk.worstCaseMinute = int(worstCaseByWalk) if worstCaseByWalk is not None else int(bestCaseByWalk)
+            return StationDetail(nearestStation, min(stationDetail.bestCaseMinute, bestCaseMinute), max(stationDetail.worstCaseMinute, worstCaseMinute))
+
+    # convert traffic to station details
+    def toStation(self, str: str):
+        station = Station()
+
+        traffics = re.split(BUKKEN_STATION_SEP_PATTERN, str)
+
+        # to store the first station group
+        nearestStation = None
+
+        for traffic in traffics:
+
+            trafficMatch = re.search(BUKKEN_TRAFFIC_REGEX, traffic)
+
+            if (trafficMatch is None):
+                print("[error] unable to process traffic", traffic)
+                return station
+
+            stationGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_STATION_GROUP)
+            nearestStation = re.sub(BUKKEN_STATION_BUILDING_NUM_PATTERN, "", stationGroup) if nearestStation is None else nearestStation
+
+            # bus
+            busGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_BUS_GROUP)
+            if busGroup is not None:
+                busMatch = re.search(BUKKEN_TRAFFIC_MINUTE_REGEX, busGroup)
+                bestCaseByBusMatch = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP)
+                worstCaseByBusMatch = busMatch.group(BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP)
+                bestCaseMinute = int(bestCaseByBusMatch)
+                worstCaseMinute = int(worstCaseByBusMatch) if worstCaseByBusMatch is not None else int(bestCaseByBusMatch)
+                # bus + walk
+                station.byBus = self.toStationDetailForStation(trafficMatch, BUKKEN_TRAFFIC_REGEX_WALK_GROUP, nearestStation, bestCaseMinute, worstCaseMinute, station.byBus)
+            else:
+                # walk
+                station.byWalk = self.toStationDetailForStation(trafficMatch, BUKKEN_TRAFFIC_REGEX_WALK_GROUP, nearestStation, 0, 0, station.byWalk)
 
         return station
 
-    # compare station detail and return the best & wrose minutes case
-    def toStationDetail(self, currentDetail: StationDetail, nextDetail: StationDetail):
+    # compare station detail and return the best & wrose minutes case for to station list method
+    def toStationDetailForStationsList(self, currentDetail: StationDetail, nextDetail: StationDetail):
         if currentDetail.nearestStation is None:
             return nextDetail
         elif nextDetail.nearestStation is not None:
@@ -248,8 +261,8 @@ class Converter:
                 stations[key] = station
             else:
                 currentStation = stations[key]
-                currentStation.byWalk = self.toStationDetail(currentStation.byWalk, station.byWalk)
-                currentStation.byBus = self.toStationDetail(currentStation.byBus, station.byBus)
+                currentStation.byWalk = self.toStationDetailForStationsList(currentStation.byWalk, station.byWalk)
+                currentStation.byBus = self.toStationDetailForStationsList(currentStation.byBus, station.byBus)
 
         return list(stations.values())
 
