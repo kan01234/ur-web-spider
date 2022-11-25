@@ -109,33 +109,50 @@ class Station:
 
 @dataclass
 class Room:
+    def __init__(self, buildingName="", roomNum="", roomType="", floorSpace=0, floor=0, stations=None, maxFloor=0, rent=0, commonFee=0, total=0, shikikin=None, systems=None, link=None, availableDate=""):
+        self.buildingName = buildingName
+        self.roomNum = roomNum
+        self.roomType = roomType
+        self.floorSpace = floorSpace
+        self.floor = floor
+        self.stations = field(default_factory=list) if stations is None else stations
+        self.maxFloor = maxFloor
+        self.rent = rent
+        self.commonFee = commonFee
+        self.total = total
+        self.shikikin = shikikin
+        self.systems = field(default_factory=list) if systems is None else systems
+        self.link = link
+        self.availableDate = availableDate
+
     # building name
-    buildingName: str = ""
+    buildingName: str
     # room
-    roomNum: str = ""
+    roomNum: str
     # room type
-    roomType: str = ""
+    roomType: str
     # floor space
-    floorSpace: float = 0
+    floorSpace: float
     # floor
-    floor: int = 0
+    floor: int
     # stations json string
-    stations: list[Station] = field(default_factory=list)
+    stations: list[Station]
     # top floor of building
-    maxFloor: int = 0
+    maxFloor: int
     # rent
-    rent: int = 0
+    rent: int
     # common fee
-    commonFee: int = 0
+    commonFee: int
     # total fee, rent + common fee
-    total: int = 0
+    total: int
     # shikikin required
-    shikikin: str = None
+    shikikin: str
     # system
-    systems: list = field(default_factory=list)
+    systems: list
     # link of room
-    link: str = None
-    availableDate: str = ""
+    link: str
+    # available date
+    availableDate: str
 
 
 @dataclass

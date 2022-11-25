@@ -7,6 +7,9 @@
                     "format": "^[a-z_]+(?:[A-Z][a-z0-9_]+)*$"
                 }
             },
+            "python:S107": {
+                "level": "off"
+            },
             "python:S116": {
                 "level": "on",
                 "parameters": {
@@ -28,6 +31,6 @@
         }
     },
     "flake8.args": [
-        "--max-line-length=200"
+        "--max-line-length=250"
     ]
 }

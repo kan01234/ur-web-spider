@@ -65,7 +65,7 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
                                 index=False,
                             )
                             showHeader = False
-                            hasNextPage = len(bukkens) >= 0 or not isDev
+                            hasNextPage = False if isDev else len(bukkens) > 0
                 except Exception as e:
                     print(f"[error] on handling bukken {block} {tdfk} {skcs} {page}, {e}")
                     traceback.print_exc()
