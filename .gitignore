@@ -1,8 +1,10 @@
-*.csv
-*.json
+# *.csv
+# *.json
 config.yaml
 .history
 *.pyc
 
 # vscode
 !.vscode/settings.json
+!src/dev/*.csv
+!src/dev/*.json
