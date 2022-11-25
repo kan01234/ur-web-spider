@@ -210,11 +210,32 @@ class Converter:
 
     # convert traffic to station details
     def toStations(self, str: str):
-        stations: list[Station] = []
+        stations: dict[Station] = {}
         for traffic in str.split(BUKKEN_TRAFFIC_SEP):
-            stations.append(self.toStation(traffic))
+            station: Station = self.toStation(traffic)
+            key = station.nearestStationByWalk if station.nearestStationByWalk is not None else station.nearestStationByBus
+            if key not in stations:
+                stations[key] = station
+            else:
+                currentStation = stations[key]
+                if currentStation.nearestStationByWalk is None:
+                    currentStation.nearestStationByWalk = station.nearestStationByWalk
+                    currentStation.bestCaseByWalk = station.bestCaseByWalk
+                    currentStation.worstCaseByWalk = station.worstCaseByWalk
+                elif station.nearestStationByWalk is not None:
+                    currentStation.bestCaseByWalk = min(currentStation.bestCaseByWalk, station.bestCaseByWalk)
+                    currentStation.worstCaseByWalk = max(currentStation.worstCaseByWalk, station.worstCaseByWalk)
 
-        return stations
+                if currentStation.nearestStationByBus is None:
+                    currentStation.nearestStationByBus = station.nearestStationByBus
+                    currentStation.bestCaseByBus = station.bestCaseByBus
+                    currentStation.worstCaseByBus = station.worstCaseByBus
+                elif station.nearestStationByBus is not None:
+                    currentStation.bestCaseByBus = min(currentStation.bestCaseByBus, station.bestCaseByBus)
+                    currentStation.worstCaseByBus = max(currentStation.worstCaseByBus, station.worstCaseByBus)
+                stations[key] = currentStation
+
+        return list(stations.values())
 
     # station to df fields
     def toStationDf(self, station):
