@@ -4,8 +4,9 @@
 name: run
 
 on:
-  push:
   workflow_dispatch:
+  schedule:
+  - cron: 00 1 * * *
 
 permissions:
   contents: read
