@@ -1,5 +1,7 @@
 # ur-web-spider
 
+[![run](https://github.com/kan01234/ur-web-spider/actions/workflows/execute-main.yml/badge.svg)](https://github.com/kan01234/ur-web-spider/actions/workflows/execute-main.yml)
+
 ## install dependency
 
 ```bash
