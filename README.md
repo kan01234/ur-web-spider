@@ -2,6 +2,7 @@
 
 [![run](https://github.com/kan01234/ur-web-spider/actions/workflows/execute-main.yml/badge.svg)](https://github.com/kan01234/ur-web-spider/actions/workflows/execute-main.yml)
 [![test](https://github.com/kan01234/ur-web-spider/actions/workflows/run-test.yml/badge.svg)](https://github.com/kan01234/ur-web-spider/actions/workflows/run-test.yml)
+[![codeql](https://github.com/kan01234/ur-web-spider/actions/workflows/codeql.yml/badge.svg)](https://github.com/kan01234/ur-web-spider/actions/workflows/codeql.yml)
 
 ## install dependency
 
