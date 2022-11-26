@@ -19,7 +19,7 @@ cat config.yaml
 isDev: true
 
 ```bash
-python src/main.py
+python3 src/main.py
 ```
 
 ## test
