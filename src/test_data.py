@@ -207,6 +207,7 @@ def testToStation(input, expectedStation):
     station: Station = converter.toStation(input)
     assert expectedStation == station
 
+
 @pytest.mark.parametrize("inputTraffic,inputNearestStation,expectedStation", [
     ("JR中央線「高尾」駅徒歩25～30分", None, "JR中央線「高尾」駅"),
     ("JR中央線「高尾」駅バス7分 徒歩1～11分", None, "JR中央線「高尾」駅"),
