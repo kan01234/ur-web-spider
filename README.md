@@ -36,7 +36,7 @@ python3 -m pytest -k testSplitStation
 
 ### json file
 
-bukken-yyyyMMdd'T'HHmm.json
+output/bukken-yyyyMMdd.json
 
 example
 
