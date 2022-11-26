@@ -7,20 +7,25 @@ LIST_SEP = ","
 
 # traffic column constant
 BUKKEN_TRAFFIC_SEP = "<br>"
-BUKKEN_STATION_SEP_PATTERN = r'、|または'
+BUKKEN_STATION_SEP_PATTERN = r'(、)|(または)|(又は)|( 　)'
+BUKKEN_STATION_PATTERN = r'(「.+」)|(駅)'
 BUKKEN_STATION_BUILDING_NUM_PATTERN = r'(（.*）)'
 BUKKEN_TRAFFIC_REGEX_STATION_GROUP = "station"
 BUKKEN_TRAFFIC_REGEX_BUS_GROUP = "bus"
 BUKKEN_TRAFFIC_REGEX_WALK_GROUP = "walk"
-# ^(?<station>((?!バス|徒歩| ).)+)?(バス(?<bus>[0-9～]+)分)?[ ]?(徒歩(?<walk>[0-9～]+)分)?[ ]?$
-BUKKEN_TRAFFIC_SPACE_REGEX = "[ ]?"
-BUKKEN_TRAFFIC_STATION_REGEX = f"(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>((?!バス|徒歩| ).)+)?"
-BUKKEN_TRAFFIC_BUS_REGEX = f"(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>[0-9～]+)分)?"
-BUKKEN_TRAFFIC_WALK_REGEX = f"(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>[0-9～]+)分)?"
-BUKKEN_TRAFFIC_REGEX = f"^{BUKKEN_TRAFFIC_STATION_REGEX}{BUKKEN_TRAFFIC_BUS_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}{BUKKEN_TRAFFIC_WALK_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}$"
+BUKKEN_TRAFFIC_SPACE_REGEX = "([ 　]+)?"
+BUKKEN_TRAFFIC_MINUTE_FROM_TO_REGEX = "[0-9１２３４５６７８９０~～]+"
+BUKKEN_TRAFFIC_STATION_REGEX = f"(?P<{BUKKEN_TRAFFIC_REGEX_STATION_GROUP}>((?!バス|徒歩).)+)?"
+BUKKEN_TRAFFIC_BUS_REGEX = f"(バス(?P<{BUKKEN_TRAFFIC_REGEX_BUS_GROUP}>{BUKKEN_TRAFFIC_MINUTE_FROM_TO_REGEX})分)?(「.+」)?"
+BUKKEN_TRAFFIC_WALK_REGEX = f"(徒歩(?P<{BUKKEN_TRAFFIC_REGEX_WALK_GROUP}>{BUKKEN_TRAFFIC_MINUTE_FROM_TO_REGEX})分)?"
+# ^(?P<station>((?!バス|徒歩).)+)?([ 　]+)?(バス(?P<bus>[0-9１２３４５６７８９０~～]+)分)?(「.+」)?([ 　]+)?(徒歩(?P<walk>[0-9１２３４５６７８９０~～]+)分)?([ 　]+)?$
+BUKKEN_TRAFFIC_REGEX = f"^{BUKKEN_TRAFFIC_STATION_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}{BUKKEN_TRAFFIC_BUS_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}{BUKKEN_TRAFFIC_WALK_REGEX}{BUKKEN_TRAFFIC_SPACE_REGEX}$"
+print(f"Bukken traffic bus walk regex: {BUKKEN_TRAFFIC_REGEX}")
 BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP = "from"
 BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP = "to"
-BUKKEN_TRAFFIC_MINUTE_REGEX = f"(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP}>[0-9]+)(～)?(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP}>([0-9]+))?"
+BBUKKEN_TRAFFIC_NUMBER_REGEX = "[0-9１２３４５６７８９０]+"
+BUKKEN_TRAFFIC_MINUTE_REGEX = f"(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_FROM_GROUP}>{BBUKKEN_TRAFFIC_NUMBER_REGEX})([~～])?(?P<{BUKKEN_TRAFFIC_MINUTE_REGEX_TO_GROUP}>{BBUKKEN_TRAFFIC_NUMBER_REGEX})?"
+print(f"Bukken traffic minute regex: {BUKKEN_TRAFFIC_MINUTE_REGEX}")
 
 # room column constant
 ROOM_FLOOR_COLUMN_NAME = "floor"
@@ -233,11 +238,22 @@ class Converter:
         else:
             return StationDetail(nearestStation, min(stationDetail.bestCaseMinute, bestCaseMinute), max(stationDetail.worstCaseMinute, worstCaseMinute))
 
+    # split station into different lines
+    def splitStation(self, str: str):
+        return list(filter(lambda x: re.search(BUKKEN_STATION_SEP_PATTERN, x) is None, filter(None, re.split(BUKKEN_STATION_SEP_PATTERN, str))))
+
+    # return if the current str is station
+    def getCurrentStation(self, stationGroup, nearestStation: str):
+        if nearestStation is None or re.search(BUKKEN_STATION_PATTERN, str(stationGroup)) is not None:
+            return re.sub(BUKKEN_STATION_BUILDING_NUM_PATTERN, "", stationGroup).strip()
+        else:
+            return nearestStation
+
     # convert traffic to station details
     def toStation(self, str: str):
         station = Station()
 
-        traffics = re.split(BUKKEN_STATION_SEP_PATTERN, str)
+        traffics = self.splitStation(str)
 
         # to store the first station group
         nearestStation = None
@@ -251,7 +267,7 @@ class Converter:
                 return station
 
             stationGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_STATION_GROUP)
-            nearestStation = re.sub(BUKKEN_STATION_BUILDING_NUM_PATTERN, "", stationGroup) if nearestStation is None else nearestStation
+            nearestStation = self.getCurrentStation(stationGroup, nearestStation)
 
             # bus
             busGroup = trafficMatch.group(BUKKEN_TRAFFIC_REGEX_BUS_GROUP)
