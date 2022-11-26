@@ -26,6 +26,7 @@ python src/main.py
 
 ```bash
 python3 -m pytest
+python3 -m pytest -k testSplitStation
 ```
 
 ## output
