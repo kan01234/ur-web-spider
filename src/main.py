@@ -6,6 +6,7 @@ import yaml
 from data import Converter, BUKKEN_FIELDS
 from builder import RequestBuilder
 import os
+import pytz
 
 try:
     configFile = yaml.safe_load(open("./config.yaml", "rb"))
@@ -21,7 +22,7 @@ except Exception as e:
 if (not os.path.exists(outputDirectory)):
     os.mkdir(outputDirectory)
 
-OUTPUT_FILE_NAME = outputDirectory + "bukken-" + datetime.now().strftime("%Y%m%d")
+OUTPUT_FILE_NAME = outputDirectory + "bukken-" + datetime.now(pytz.timezone('Asia/Tokyo')).strftime("%Y%m%d")
 
 requestBuilder = RequestBuilder(isDev)
 # open file write stream
