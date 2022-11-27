@@ -1,5 +1,6 @@
 *.csv
 *.json
+.DS_Store
 
 config.yaml
 .history
