@@ -60,7 +60,7 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
 
                             df.to_csv(
                                 path_or_buf=csvFile,
-                                header=BUKKEN_FIELDS.keys() if showHeader else False,
+                                header=[key for key in BUKKEN_FIELDS] if showHeader else False,
                                 columns=BUKKEN_FIELDS.values(),
                                 encoding="utf-8",
                                 index=False,
