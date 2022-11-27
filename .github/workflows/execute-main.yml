@@ -9,9 +9,6 @@ on:
   schedule:
   - cron: 0 16 * * *
 
-permissions:
-  contents: read
-
 jobs:
   build:
 
