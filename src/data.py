@@ -36,6 +36,7 @@ ROOM_SHIKIKIN_COLUMN_NAME = "shikikin"
 ROOM_TRAFFIC_COLUMN_NAME = "traffic"
 ROOM_COMMON_FEE_COLUMN_NAME = "commonFee"
 ROOM_SYSTEMS_COLUMN_NAME = "systems"
+ROOM_ELEVATOR_COLUMN_NAME = "hasElevator"
 
 # station column constant
 STATIONS_COLUMN_NAME = "stations"
@@ -78,6 +79,7 @@ BUKKEN_FIELDS = {
     "Building Name": "buildingName",
     "Building Structure": BUKKEN_STRUCTURE_COLUMN_NAME,
     "Floor": ROOM_FLOOR_COLUMN_NAME,
+    "Elevator": ROOM_ELEVATOR_COLUMN_NAME,
     "Room Num": "roomNum",
     "Room Type": "roomType",
     "Floor Space": ROOM_FLOOR_SPACE_COLUMN_NAME,
@@ -165,7 +167,8 @@ class Room:
     link: str
     # available date
     availableDate: str
-
+    # hasElevator
+    hasElevator: bool
 
 @dataclass
 class Bukken:
@@ -207,6 +210,7 @@ class Converter:
             systems=json["system"],
             link=f"https://www.ur-net.go.jp{json['roomLinkPc']}",
         )
+        room.hasElevator = json.get("feature", "").__contains__("エレベーター")
         return self.decorateDetail(room, json)
 
     def decorateDetail(self, room, json):
@@ -359,4 +363,6 @@ class Converter:
         df = df.explode(STATIONS_COLUMN_NAME).reset_index(drop=True)
         df = df.merge(pd.json_normalize(df[STATIONS_COLUMN_NAME]), left_index=True, right_index=True).drop(STATIONS_COLUMN_NAME, axis=1)
 
+        # convert bool to 'Y', 'N'
+        df[ROOM_ELEVATOR_COLUMN_NAME] = df[ROOM_ELEVATOR_COLUMN_NAME].apply(lambda hasElevator: pd.Series('Y' if hasElevator else 'N'))
         return df
