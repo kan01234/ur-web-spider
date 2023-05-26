@@ -210,7 +210,8 @@ class Converter:
             systems=json["system"],
             link=f"https://www.ur-net.go.jp{json['roomLinkPc']}",
         )
-        room.hasElevator = json.get("feature", "").__contains__("エレベーター")
+        # room.hasElevator = json.get("feature", "").__contains__("エレベーター")
+        room.hasElevator = false
         return self.decorateDetail(room, json)
 
     def decorateDetail(self, room, json):
