@@ -211,7 +211,7 @@ class Converter:
             link=f"https://www.ur-net.go.jp{json['roomLinkPc']}",
         )
         # room.hasElevator = json.get("feature", "").__contains__("エレベーター")
-        room.hasElevator = false
+        room.hasElevator = False
         return self.decorateDetail(room, json)
 
     def decorateDetail(self, room, json):
