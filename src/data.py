@@ -6,7 +6,7 @@ import re
 LIST_SEP = ","
 
 # traffic column constant
-BUKKEN_TRAFFIC_SEP = "<br>"
+BUKKEN_TRAFFIC_SEP = "</li>"
 BUKKEN_STATION_SEP_PATTERN = r'(、)|(または)|(又は)|( 　)'
 BUKKEN_STATION_PATTERN = r'(「.+」)|(駅)'
 BUKKEN_STATION_BUILDING_NUM_PATTERN = r'(（.*）)'
@@ -302,7 +302,7 @@ class Converter:
     def toStations(self, str: str):
         stations: dict[Station] = {}
         for traffic in str.split(BUKKEN_TRAFFIC_SEP):
-            station: Station = self.toStation(traffic)
+            station: Station = self.toStation(traffic.replace("<li>",""))
             key = station.byWalk.nearestStation if station.byWalk.nearestStation is not None else station.byBus.nearestStation
             if key not in stations:
                 stations[key] = station
