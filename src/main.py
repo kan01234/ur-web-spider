@@ -42,7 +42,7 @@ with open(OUTPUT_FILE_NAME + ".json", "w") as jsonFile, open(OUTPUT_FILE_NAME + 
                     while hasNextPage:
                         page += 1
                         bukkens = requestBuilder.postBukkenResult(block=block, tdfk=tdfk, skcs=skcs, page=page)
-                        if (bukkens is None or len(bukkens) == 0 or int(bukkens[0]["roomCount"]) == 0):
+                        if (bukkens is None or len(bukkens) == 0):
                             break
                         for bukkenJson in bukkens:
                             jsonRowCount += 1
